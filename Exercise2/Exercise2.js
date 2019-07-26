@@ -11,9 +11,6 @@ let isToProvideNames = false;
 
 class Participant {
     constructor() {
-        // this.seqNo = seqNo;
-        // this.name = name;
-        // this.score = score;
         this.seqNo;
         this.name;
         this.score;
