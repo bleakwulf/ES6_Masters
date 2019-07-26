@@ -1,5 +1,5 @@
 // import "readline";
-var readline = require('readline');
+const readline = require('readline');
 
 // Note: As Proxies are an ES6 
 // feature, some browsers/clients may not support it and 
@@ -41,7 +41,7 @@ const textPart = new Enum({
     CONSONANT: 'consonant'
 })
 
-var rl = readline.createInterface({
+const rl = readline.createInterface({
     input: process.stdin, 
     output: process.stdout
 });
