@@ -5,6 +5,9 @@ const rl = readline.createInterface({
     prompt: ':'
 });
 
+const MIN_SCORE = 1;
+const MAX_SCORE = 10;
+
 let participantCount = 0;
 let participants = [];
 let isToProvideNames = false;
@@ -48,7 +51,7 @@ const promptForParticipantCount = () => {
         if (isNumeric(participantCount)) {
             promptIfToEnterNames();
         } else {
-            console.log(`Your input was not recognized as a number. Please try again.\n`)
+            console.log(`\tERROR: Your input was not recognized as a number. Please try again.\n`)
             promptForParticipantCount();
         }
 
@@ -56,14 +59,9 @@ const promptForParticipantCount = () => {
 }
 
 const promptIfToEnterNames = () => {
-    rl.question(`Would you like to provide the participants' names [Y/N]?`, (answer) => {
-
-        if (answer.toLowerCase().replace(/^\s+|\s+$/g, '') === 'y' || answer.toLowerCase().replace(/^\s+|\s+$/g, '') === 'n') {
-            isToProvideNames = answer.toLowerCase().replace(/^\s+|\s+$/g, '') === 'y';
-            promptEntryOfParticipants();
-        } else {
-            promptIfToEnterNames();
-        }
+    rl.question(`Would you like to provide the participants' names [Y if yes]? `, (answer) => {
+        isToProvideNames = answer.toLowerCase().replace(/^\s+|\s+$/g, '') === 'y';
+        promptEntryOfParticipants();
     });
 }
 
@@ -88,6 +86,8 @@ const promptForParticipantName = () => {
                 participant.seqNo = participants.length + 1;
                 participant.name = name;
                 participants.push(participant);
+            } else {
+                console.log(`\tERROR: No name provided.\n`)
             }
 
             promptForParticipantName();
@@ -99,13 +99,12 @@ const promptForParticipantScore = (participantIndex) => {
     let seqNo = isToProvideNames ? participantIndex : participants.length;
 
     if (seqNo >= participantCount) {
-        sortParticipantsByScore();
-        finalizeRankings();
+        rankParticipantsByScore();
         rl.close();
 
     } else {
         let participantSeqNo = seqNo + 1;
-        let question = `Please enter score [1-10 only] of ${addOrdinalSuffix(seqNo + 1)} contestant : `;
+        let question = `Please enter score [${MIN_SCORE}-${MAX_SCORE} only] of ${addOrdinalSuffix(seqNo + 1)} contestant : `;
         if (isToProvideNames) {
             question = question.replace('contestant', `contestant (${participants[seqNo].name})`);
         }
@@ -123,6 +122,8 @@ const promptForParticipantScore = (participantIndex) => {
                     participant.score = score;
                     participants.push(participant);
                 }
+            } else {
+                console.log(`\tERROR: Invalid score. Please try again.\n`)
             }
 
             promptForParticipantScore(seqNo);
@@ -130,14 +131,50 @@ const promptForParticipantScore = (participantIndex) => {
     }
 }
 
-const sortParticipantsByScore = () => {
-    participants.sort((a, b) => (a.score < b.score) ? 1 : (a.score === b.score) ? 0 : -1 );
-    console.log(participants);
+const rankParticipantsByScore = () => {
+    // group participants according to their scores 
+    const rankedParticipants = groupParticipantsByAttr(participants, 'score');
+
+    // destructuring part 1: sort unique score values descending in descneding order 
+    //      and extract available top 3 scores, default each to 0 if none found
+    let [topScore1 = 0, 
+        topScore2 = 0, 
+        topScore3 = 0] = Object.keys(rankedParticipants).sort((a, b) => b - a);
+
+    // destructuring part 2: extract participant names according to matching top 3 scores
+    let {
+        [topScore1]: top1Participants, 
+        [topScore2]: top2Participants, 
+        [topScore3]: top3Participants} = rankedParticipants;
+
+    // display rankings
+    parseInt(topScore1) === 0 || displayRankDetail(1, topScore1, top1Participants);
+    parseInt(topScore2) === 0 || displayRankDetail(2, topScore2, top2Participants);
+    parseInt(topScore3) === 0 || displayRankDetail(3, topScore3, top3Participants);
+
 }
 
-const finalizeRankings = () => {
-    console.log('Yayy! [TO DO: finalize ranking stats]');
+const displayRankDetail = (rank, score, participants) => {
+    const displayName = participants.length > 1 ? participants.length + ` contestants`
+        : isToProvideNames ? participants[0].name 
+        : addOrdinalSuffix(participants[0].seqNo) + ` contestant`;
+
+    console.log(`\t(${addOrdinalSuffix(rank)}) ${displayName} scored ${score} out of ${MAX_SCORE}`);
 }
+
+const groupParticipantsByAttr = (participantsList, groupByAttr) => {
+    return participantsList.reduce(
+        function(rankedParticipants, participant) {
+            const scoreKey = participant[groupByAttr];
+
+            if (!rankedParticipants[scoreKey]) {
+                rankedParticipants[scoreKey] = [];
+            }
+
+            rankedParticipants[scoreKey].push(participant);
+            return rankedParticipants;
+        }, {});
+};
 
 console.log(`Press Ctrl + 'C' to exit at any time`);
 promptForParticipantCount();
