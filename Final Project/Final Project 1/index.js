@@ -64,6 +64,7 @@ app.post('/office/:id/dispense', (req, res) => {
     }
 
     targetKeg.kegVolume -= KEG_DISPENSE_AMOUNT;
+    targetKeg.kegVolume = targetKeg.kegVolume < 0 ? 0 : targetKeg.kegVolume;
     targetKeg.kegState = targetKeg.kegVolume === 0 ? 0      // keg is empty, needs refill
         : targetKeg.kegVolume <= KEG_VOLUME_ALMOST_DRY ? 1  // keg is almost dry
         : 2;                                                // keg volume is going down
